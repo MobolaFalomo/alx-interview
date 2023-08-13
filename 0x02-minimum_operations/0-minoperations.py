@@ -1,5 +1,10 @@
 #!/usr/bin/python3
+"""This module defines a function 'minOperations(n)'"""
+
+
 def minOperations(n):
+    """ Calculates the fewest number of operations needed """
+
     len_H = 1
     len_copied_H = 0
     total_operations = 0
