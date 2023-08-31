@@ -1,140 +1,123 @@
 #!/usr/bin/python3
-"""
-   Description: The N queens puzzle is the challenge of placing N non-attacking
-                queens on an N×N chessboard. Write a program that solves the N
-                queens problem.
-   Usage: nqueens N:
-          If the user called the program with the wrong number of arguments,
-          print Usage: nqueens N, followed by a new line, and exit with the
-          status 1
-   where N must be an integer greater or equal to 4:
-          If N is not an integer, print N must be a number, followed by a new
-          line, and exit with the status 1
-          If N is smaller than 4, print N must be at least 4, followed by a new
-          line, and exit with the status 1
-   The program should print every possible solution to the problem:
-          One solution per line
-          Format: see example
-          You don’t have to print the solutions in a specific order
-   You are only allowed to import the sys module
-"""
-
-
+""" N queens Module """
 import sys
 
 
-def print_board(board):
-    """ print_board
-    Args:
-        board - list of list with length sys.argv[1]
-    """
-    new_list = []
-    for i, row in enumerate(board):
-        value = []
-        for j, col in enumerate(row):
-            if col == 1:
-                value.append(i)
-                value.append(j)
-        new_list.append(value)
-
-    print(new_list)
-
-
-def isSafe(board, row, col, number):
-    """ isSafe
-    Args:
-        board - list of list with length sys.argv[1]
-        row - row to check if is safe doing a movement in this position
-        col - col to check if is safe doing a movement in this position
-        number: size of the board
-    Return: True of False
+class Chess:
+    """ Chess object to nqueens problem
     """
 
-    # Check this row in the left side
-    for i in range(col):
-        if board[row][i] == 1:
-            return False
+    SOLUTIONS = []
 
-    # Check upper diagonal on left side
-    for i, j in zip(range(row, -1, -1), range(col, -1, -1)):
-        if board[i][j] == 1:
-            return False
+    def __init__(self, N: int) -> None:
+        """ Instance method
 
-    for i, j in zip(range(row, number, 1), range(col, -1, -1)):
-        if board[i][j] == 1:
-            return False
+        Args:
+            N (int): Chess board size
+        """
+        self.N = N
+        # set up board
+        self.board = [[0] * self.N for _ in range(self.N)]
 
-    return True
+    def is_safe(self, board, row: int, col: int, N) -> bool:
+        """ Check if queen is safe for placement
 
+        Args:
+            board (List[list]): 2D chess board
+            row (int): row inspecting
+            col (int): col inspecting
+            N (_type_): Board size
 
-def solveNQUtil(board, col, number):
-    """ Auxiliar method to find the posibilities of answer
-    Args:
-        board - Board to resolve
-        col - Number of col
-        number - size of the board
-    Returns:
-        All the posibilites to solve the problem
-    """
+        Returns:
+            bool: True if safe else false
+        """
+        # rule for checking if queens in the same row
+        for i in range(col):
+            if board[row][i] == 1:
+                return False
 
-    if (col == number):
-        print_board(board)
+        # rule for checking if queen is up
+        for i, j in zip(range(row, -1, -1), range(col, -1, -1)):
+            if board[i][j] == 1:
+                return False
+
+        # check if queen is down
+        for i, j in zip(range(row, N, 1), range(col, -1, -1)):
+            if board[i][j] == 1:
+                return False
+
         return True
-    res = False
-    for i in range(number):
 
-        if (isSafe(board, i, col, number)):
+    def find_solution(
+            self, board,
+            col: int, N: int, solutions) -> bool:
+        """ find solution for nqueens problem
 
-            # Place this queen in board[i][col]
-            board[i][col] = 1
+        Args:
+            board (List[list]): 2D chess board
+            col (int): column exploring
+            N (int): board size
+            solutions (List[list]): list of solution list
 
-            # Make result true if any placement
-            # is possible
-            res = solveNQUtil(board, col + 1, number) or res
+        Returns:
+            bool: True if found else False
+        """
+        # found a solution meaning queens ain't attacking eachother
+        if col >= N:
+            solution = []
+            for i in range(N):
+                for j in range(N):
+                    if board[i][j] == 1:
+                        solution.append([i, j])
+            solutions.append(solution)
+            return True
 
-            board[i][col] = 0  # BACKTRACK
+        res = False
+        for i in range(N):
+            # backtracking meaning go back and undo if a spot isn't safe
+            if self.is_safe(board, i, col, self.N):
+                board[i][col] = 1
+                # keep record of last valid solution if
+                # there is no point moving forward
+                res = self.find_solution(
+                    board, col + 1, self.N, solutions) or res
+                # undo temporary placement
+                board[i][col] = 0
 
-    return res
+        return res
+
+    def solve_nqueens(self) -> None:
+        """ N queens method
+        """
+        # if no valid solution is found return empty list
+        if not self.find_solution(self.board, 0, self.N, Chess.SOLUTIONS):
+            return []
+
+        return Chess.SOLUTIONS
 
 
-def solve(number):
-    """ Find all the posibilities if exists
-    Args:
-        number - size of the board
+def main() -> None:
+    """ main function
     """
-    board = [[0 for i in range(number)]for i in range(number)]
-
-    if not solveNQUtil(board, 0, number):
-        return False
-
-    return True
-
-
-def validate(args):
-    """ Validate the input data to verify if the size to
-        answer is posible
-    Args:
-        args - sys.argv
-    """
-    if (len(args) == 2):
-        # Validate data
-        try:
-            number = int(args[1])
-        except Exception:
-            print("N must be a number")
-            exit(1)
-        if number < 4:
-            print("N must be at least 4")
-            exit(1)
-        return number
-    else:
+    if len(sys.argv) != 2:
         print("Usage: nqueens N")
-        exit(1)
+        sys.exit(1)
+
+    try:
+        N = int(sys.argv[1])
+    except ValueError:
+        print("N must be a number")
+        sys.exit(1)
+
+    if N < 4:
+        print("N must be at least 4")
+        sys.exit(1)
+
+    nqueens: Chess = Chess(N)
+    solutions = nqueens.solve_nqueens()
+    for solution in solutions:
+        print(solution)
 
 
 if __name__ == "__main__":
-    """ Main method to execute the application
-    """
-
-    number = validate(sys.argv)
-    solve(number)
+    main()
